@@ -1,0 +1,209 @@
+RequestSpecification httpRequest;
+Response response;
+
+
+BaseURI:
+RestAssured.baseURI = "https://reqres.in/api/users?page=2";
+httpRequest = RestAssured.given()
+                .header("Accept", "application/json");
+response = httpRequest.get();
+
+RestAssured.baseURI = "https://reqres.in/api/users";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .queryParam("page", pageNumber);
+response = httpRequest.get();
+
+////
+RestAssured.baseURI = "https://reqres.in/api/userId/1";
+
+int userId = 5; // Change dynamically
+RestAssured.baseURI = "https://reqres.in/api/userId/" + userId;
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json");
+response = httpRequest.get();
+
+int userId = 5;
+RestAssured.baseURI = "https://reqres.in/api";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .pathParam("id", userId);
+response = httpRequest.get("/userId/{id}");
+
+
+
+
+////////////////////////
+
+RestAssured.baseURI = "https://reqres.in/api/users";
+String requestBody = "name=John&job=Engineer"; // x-www-form-urlencoded
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(requestBody);
+response = httpRequest.post();
+
+
+int deptId = 10; // Dynamic value
+RestAssured.baseURI = "https://reqres.in/api";
+String requestBody = "name=John&job=Engineer"; // x-www-form-urlencoded
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .pathParam("dept", deptId) // placeholder for path variable
+        .body(requestBody);
+response = httpRequest.post("/departments/{dept}/users");
+System.out.println("Response:\n" + response.prettyPrint());
+/*
+String requestBody = "userId=" + userId + "&"
+                + "emailId=" + emailId + "&"
+                + "aadhaarNumber=" + aadhaarNumber + "&"
+                + "firstName=" + firstName + "&"
+                + "lastName=" + lastName + "&"
+                + "phoneNumber=" + phoneNumber + "&"
+                + "gender=" + gender;
+*/
+
+RestAssured.baseURI = "https://reqres.in/api/users";
+String jsonBody = """
+{
+    "name": "John",
+    "job": "Engineer"
+}
+""";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .header("Content-Type", "application/json")
+        .body(jsonBody);
+
+response = httpRequest.post();
+System.out.println("Response:\n" + response.prettyPrint());
+
+
+///////////////////////
+RestAssured.baseURI = "https://reqres.in/api/users/2";
+String requestBody = "name=John Updated&job=Manager";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(requestBody);
+response = httpRequest.put();
+System.out.println("PUT Response:\n" + response.prettyPrint());
+
+
+int userId = 2; // Dynamic user ID
+RestAssured.baseURI = "https://reqres.in/api/users/" + userId;
+String jsonBody = """
+{
+    "name": "John Updated",
+    "job": "Manager"
+}
+""";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .header("Content-Type", "application/json")
+        .body(jsonBody);
+response = httpRequest.put();
+
+
+int userId = 2; // Dynamic user ID
+RestAssured.baseURI = "https://reqres.in/api/users/" + userId;
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json")
+        .contentType("application/x-www-form-urlencoded") // form data
+        .formParam("name", "John Updated")
+        .formParam("job", "Manager");
+response = httpRequest.put();
+System.out.println("PUT Response (formParam):\n" + response.prettyPrint());
+
+**
+If this API is designed to update a specific user, it must find them somehow — usually from:
+
+An id field in the request body, or
+A query parameter like ?id=5
+/////////////////////
+RestAssured.baseURI = "https://reqres.in/api/users/2";
+httpRequest = RestAssured.given()
+        .header("Accept", "application/json");
+response = httpRequest.delete();
+System.out.println("DELETE Response Status: " + response.statusCode());
+Assert.assertEquals(response.statusCode(), 204, "Status Code Check");
+
+
+///////////////////////////////////////////  RESPONSE /////////////
+*****Headers****
+int a  = response.getStatusCode();
+
+String b = response.getContentType();
+String contentType = response.getHeader("Content-Type");
+
+Headers allHeaders = response.getHeaders();
+for (Header header : allHeaders) {
+    System.out.println(header.getName() + " : " + header.getValue());
+}
+
+
+*****Body with json array and obj****
+String responseBody  = response.getBody().asString();      asPrettyString();
+JSONArray jsonArray = new JSONArray(responseBody);
+for (int i = 0; i < jsonArray.length(); i++) {
+        JSONObject user = jsonArray.getJSONObject(i);
+        System.out.println("User " + user.getInt("id") + ": " + user.getString("first_name"));
+}
+
+
+********** assertions ****************
+import static org.hamcrest.Matchers.*;
+int user_Id = 1;
+// array response check 
+response.then().statusCode(200)
+                .body("", not(empty()))
+                .body("find { it.userId == " + user_Id + " }", notNullValue());  //user_Id exists
+
+String expectedName = "John";
+response.then()
+        .body("find { it.userId == " + user_Id + " }.name", equalTo(expectedName));
+
+
+I expect that no object in this array has userId equal to user_Id.
+ .body("find { it.userId == " + user_Id + " }", nullValue());
+
+
+response.then()
+        .statusCode(200)
+        .header("Content-Type", "application/json; charset=utf-8");
+
+
+
+Assert.assertEquals(response.getStatusCode(), 200);
+//single obj output
+response.then().body("userId", equalTo(Integer.parseInt(user_Id)));
+response.then().body("firstName", equalTo(firstName));
+
+*****body with path, jsonPath,****
+//////
+//single
+String lastName = response.path("last_name");
+
+JsonPath js = response.jsonPath();  or JsonPath js = response.body().jsonPath();
+// Direct get() calls
+int id = js.get("id");
+String email = js.get("email");
+String firstName = js.get("first_name");
+String avatar = js.get("avatar");
+
+
+
+//multiple
+JsonPath js = response.jsonPath();
+String secondUserFirstName = js.getString("[1].first_name");
+System.out.println("Second User First Name: " + secondUserFirstName); 
+
+int i = 1;
+String lastUserFirstName = js.getString("[" + i + "].first_name");
+
+String firstUserEmail = response.path("[0].email");
+
+List<String> allFirstNames = response.jsonPath().getList("first_name");
+System.out.println("All First Names: " + allFirstNames);
+// Output: [Michael, Lindsay]
